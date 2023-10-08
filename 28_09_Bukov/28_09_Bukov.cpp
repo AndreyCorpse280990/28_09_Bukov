@@ -1,9 +1,7 @@
 ﻿#include <iostream>
 #include <string>
 #include <Windows.h>
-#include <cstdio>
 #include <fstream>
-
 
 class PhoneBook
 {
@@ -33,8 +31,11 @@ public:
     // Метод для сохранения данных в файл
     void saveToFile();
 
-    // Метод для загрузки контакта из файла
-    void loadFromFile(const std::string& filename);
+    // Метод для загрузки контакта из файла по имени
+    void loadFromFile(const std::string& filename, const std::string& contactName);
+
+    // Функция для вывода списка контактов в файле
+    void listContacts(const std::string& filename);
 };
 
 int main() {
@@ -48,14 +49,13 @@ int main() {
         std::cout << "Выберите операцию:" << std::endl;
         std::cout << "1. Добавить контакт" << std::endl;
         std::cout << "2. Показать контакт" << std::endl;
-        std::cout << "3. Сохранить контакт в файл" << std::endl;
-        std::cout << "4. Загрузить контакт из файла" << std::endl;
-        std::cout << "5. Выйти" << std::endl;
+        std::cout << "3. Загрузить контакт из файла" << std::endl;
+        std::cout << "4. Выйти" << std::endl;
 
         int choice;
         std::cin >> choice;
 
-        if (choice == 5)
+        if (choice == 4)
         {
             break;
         }
@@ -87,7 +87,6 @@ int main() {
             phoneBook.addContact(contactName, homePhone, workPhone, mobilePhone, info);
             std::cout << "Контакт '" << contactName << "' добавлен в телефонную книгу." << std::endl;
 
-            // Предложение сохранить контакт в файл
             std::cout << "Желаете сохранить этот контакт в файл? (да/нет): ";
             std::string saveChoice;
             std::cin >> saveChoice;
@@ -103,18 +102,18 @@ int main() {
             break;
         }
         case 3: {
-            phoneBook.saveToFile();
-            std::cout << "Контакт сохранен в файле: phone.txt" << std::endl;
+            phoneBook.listContacts("phone.txt");
+            std::cout << "Введите имя контакта, который хотите загрузить из phone.txt: ";
+            std::string contactToLoad;
+            std::cin.ignore();
+            std::getline(std::cin, contactToLoad);
+
+            // Загрузить контакт по имени
+            phoneBook.loadFromFile("phone.txt", contactToLoad);
+            std::cout << "Контакт '" << contactToLoad << "' загружен." << std::endl;
             break;
         }
-        case 4: {
-            std::cout << "Введите имя файла для загрузки контакта: ";
-            std::string filename;
-            std::cin >> filename;
-            phoneBook.loadFromFile(filename);
-            std::cout << "Контакт загружен из файла: " << filename << std::endl;
-            break;
-        }
+
         default:
             std::cout << "Некорректный выбор. Попробуйте еще раз." << std::endl;
         }
@@ -122,7 +121,6 @@ int main() {
 
     return 0;
 }
-
 
 
 // Реализация конструктора с полным набором параметров
@@ -183,12 +181,10 @@ void PhoneBook::addContact(const std::string& contactName, unsigned int homePhon
     Info = new std::string(info);
 }
 
-
-
 // Реализация метода для сохранения в файл  
 void PhoneBook::saveToFile()
 {
-    std::ofstream file("phone.txt", std::ofstream::out | std::ofstream::app); 
+    std::ofstream file("phone.txt", std::ofstream::out | std::ofstream::app);
     if (!file.is_open()) {
         std::cout << "Ошибка открытия файла phone.txt" << std::endl;
         return;
@@ -203,9 +199,8 @@ void PhoneBook::saveToFile()
     file.close();
 }
 
-
-
-void PhoneBook::loadFromFile(const std::string& filename)
+// Функция для вывода списка контактов в файле
+void PhoneBook::listContacts(const std::string& filename)
 {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -214,33 +209,88 @@ void PhoneBook::loadFromFile(const std::string& filename)
         return;
     }
 
-    std::string contactName;
-    unsigned int homePhone, workPhone, mobilePhone;
-    std::string info;
+    std::string line;
+    std::cout << "Список контактов в файле " << filename << ":" << std::endl;
+    while (std::getline(file, line))
+    {
+        std::cout << line << std::endl;
 
-    std::getline(file, contactName);
-    file >> homePhone;
-    file >> workPhone;
-    file >> mobilePhone;
-    std::getline(file, info);
+        // Пропускаем строки (телефоны и дополнительную информацию)
+        for (int i = 0; i < 4; ++i)
+        {
+            std::getline(file, line);
+        }
+    }
 
-    // Освобождаю старые данные
+    file.close();
+}
+
+
+// Реализация метода для загрузки контакта из файла по имени
+void PhoneBook::loadFromFile(const std::string& filename, const std::string& contactName)
+{
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        std::cout << "Ошибка открытия файла: " << filename << std::endl;
+        return;
+    }
+
+    // Очищаем текущий контакт
     if (name != nullptr)
     {
         delete name;
+        name = nullptr;
     }
-
     if (Info != nullptr)
     {
         delete Info;
+        Info = nullptr;
     }
 
-    // Загружаю новые данные
-    name = new  std::string(contactName);
-    HomePhone = homePhone;
-    WorkPhone = workPhone;
-    MobilePhone = mobilePhone;
-    Info = new std::string(info);
+    std::string line;
+    bool found = false;
+    while (std::getline(file, line))
+    {
+        if (line == contactName)
+        {
+            name = new std::string(line); // Записываем ФИО
+
+            // Считываем далее строки (телефоны и дополнительную информацию)
+            std::getline(file, line); // Домашний телефон
+            HomePhone = std::stoul(line);
+
+            std::getline(file, line); // Рабочий телефон
+            WorkPhone = std::stoul(line);
+
+            std::getline(file, line); // Мобильный телефон
+            MobilePhone = std::stoul(line);
+
+            std::getline(file, line); // Дополнительная информация
+            Info = new std::string(line);
+
+            found = true;
+            break;
+        }
+        else
+        {
+            // Пропускаем строки (телефоны и дополнительную информацию)
+            std::getline(file, line);
+            std::getline(file, line);
+            std::getline(file, line);
+            std::getline(file, line);
+        }
+    }
+
+    // Если контакт был найден, выводим сообщение
+    if (found)
+    {
+        std::cout << "Контакт '" << contactName << "' загружен." << std::endl;
+    }
+    else
+    {
+        std::cout << "Контакт с именем '" << contactName << "' не найден в файле." << std::endl;
+    }
 
     file.close();
 }
