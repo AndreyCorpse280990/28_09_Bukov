@@ -58,7 +58,7 @@ PhoneBook::PhoneBook(const std::string& nameP, unsigned int HomePhoneP, unsigned
 
 // Реализация конструктора по умолчанию
 PhoneBook::PhoneBook()
-    : name(nullptr), HomePhone(0), WorkPhone(0), MobilePhone(0), Info(nullptr)
+    : PhoneBook("", 0, 0, 0, "")
 {
     std::cout << "Конструктор по умолчанию отработал" << std::endl;
 }
