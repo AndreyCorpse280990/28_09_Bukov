@@ -31,7 +31,7 @@ public:
     void addContact(const std::string& contactName, unsigned int homePhone, unsigned int workPhone, unsigned int mobilePhone, const std::string& info);
 
     // Метод для сохранения данных в файл
-    void saveToFile(const std::string& filename) const;
+    void saveToFile();
 
     // Метод для загрузки контакта из файла
     void loadFromFile(const std::string& filename);
@@ -42,7 +42,9 @@ int main() {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-    while (true) {
+    PhoneBook phoneBook;
+    while (true)
+    {
         std::cout << "Выберите операцию:" << std::endl;
         std::cout << "1. Добавить контакт" << std::endl;
         std::cout << "2. Показать контакт" << std::endl;
@@ -53,13 +55,13 @@ int main() {
         int choice;
         std::cin >> choice;
 
-        if (choice == 5) {
+        if (choice == 5)
+        {
             break;
         }
 
-        PhoneBook phoneBook;  // Создаем объект PhoneBook
-
-        switch (choice) {
+        switch (choice)
+        {
         case 1: {
             unsigned int homePhone, workPhone, mobilePhone;
             std::string info;
@@ -84,6 +86,16 @@ int main() {
 
             phoneBook.addContact(contactName, homePhone, workPhone, mobilePhone, info);
             std::cout << "Контакт '" << contactName << "' добавлен в телефонную книгу." << std::endl;
+
+            // Предложение сохранить контакт в файл
+            std::cout << "Желаете сохранить этот контакт в файл? (да/нет): ";
+            std::string saveChoice;
+            std::cin >> saveChoice;
+            if (saveChoice == "да") {
+                phoneBook.saveToFile();
+                std::cout << "Контакт сохранен в файле: phone.txt" << std::endl;
+            }
+
             break;
         }
         case 2: {
@@ -91,11 +103,8 @@ int main() {
             break;
         }
         case 3: {
-            std::cout << "Введите имя файла для сохранения контакта: ";
-            std::string filename;
-            std::cin >> filename;
-            phoneBook.saveToFile(filename);
-            std::cout << "Контакт сохранен в файле: " << filename << std::endl;
+            phoneBook.saveToFile();
+            std::cout << "Контакт сохранен в файле: phone.txt" << std::endl;
             break;
         }
         case 4: {
@@ -175,14 +184,13 @@ void PhoneBook::addContact(const std::string& contactName, unsigned int homePhon
 }
 
 
-// Реализация метода для сохранения в файл  
-void PhoneBook::saveToFile(const std::string& filename) const
-{
 
-    std::ofstream file(filename);
-    if (!file.is_open())
-    {
-        std::cout << "Ошибка открытия файла" << filename << std::endl;
+// Реализация метода для сохранения в файл  
+void PhoneBook::saveToFile()
+{
+    std::ofstream file("phone.txt", std::ofstream::out | std::ofstream::app); 
+    if (!file.is_open()) {
+        std::cout << "Ошибка открытия файла phone.txt" << std::endl;
         return;
     }
 
@@ -195,7 +203,8 @@ void PhoneBook::saveToFile(const std::string& filename) const
     file.close();
 }
 
-// Реализация метода загрузки контакта из файла
+
+
 void PhoneBook::loadFromFile(const std::string& filename)
 {
     std::ifstream file(filename);
